@@ -1,28 +1,24 @@
 package com.udacity.gradle.builditbigger;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.test.espresso.idling.CountingIdlingResource;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
+import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.Toast;
-
-import com.alexsav.builditbiggerlibrary.JokeActivity;
 
 
-public class MainActivity extends AppCompatActivity implements EndPointCallBack {
+public class MainActivity extends AppCompatActivity {
 
-    private ProgressBar progressBar;
-    private final CountingIdlingResource idlingResource = new CountingIdlingResource("MainActivity");
+    @Nullable
+    private GlobalIdlingResource idlingResource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        progressBar = findViewById(R.id.progress_bar);
     }
 
 
@@ -48,22 +44,19 @@ public class MainActivity extends AppCompatActivity implements EndPointCallBack 
         return super.onOptionsItemSelected(item);
     }
 
-    public void tellJoke(View view) {
-        new JokeAsyncTask().execute(this);
-        idlingResource.increment();
-        progressBar.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onResultReady(String result) {
-        idlingResource.decrement();
-        progressBar.setVisibility(View.GONE);
-        Intent intent = new Intent(this, JokeActivity.class);
-        intent.putExtra(JokeActivity.JOKE, result);
-        startActivity(intent);
-    }
-
-    public CountingIdlingResource getIdlingResource() {
+    @VisibleForTesting
+    @NonNull
+    public IdlingResource getIdlingResource() {
+        if (idlingResource == null) {
+            idlingResource = new GlobalIdlingResource();
+        }
         return idlingResource;
     }
+
+    public void setIdlingResource(boolean idleStateNow) {
+        if (idlingResource != null) {
+            idlingResource.idleState(idleStateNow);
+        }
+    }
+
 }

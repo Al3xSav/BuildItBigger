@@ -5,45 +5,47 @@ import android.util.Log;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
-import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
-import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.udacity.gradle.builditbigger.backend.myApi.MyApi;
 
 import java.io.IOException;
 
-public class JokeAsyncTask extends AsyncTask<EndPointCallBack, Void, String>{
+public class JokeAsyncTask extends AsyncTask<MainActivityFragment.AsyncTaskCallback, Void, String> {
+
     private static final String TAG = JokeAsyncTask.class.getSimpleName();
     private static MyApi myApi = null;
-    private EndPointCallBack endPointCallBack;
+
+    private MainActivityFragment.AsyncTaskCallback asyncTaskCallback = null;
 
     @Override
-    protected String doInBackground(EndPointCallBack... endPointCallBacks) {
+    protected final String doInBackground(MainActivityFragment.AsyncTaskCallback... asyncTaskCallbacks) {
+
+        // set http for the appengine
         if (myApi == null) {
-            MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
+            myApi = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
                     new AndroidJsonFactory(), null)
-                    .setRootUrl("http://10.0.2.2:8080/_ah/api/")
-                    .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
-                @Override
-                public void initialize(AbstractGoogleClientRequest<?> request) throws IOException {
-                    request.setDisableGZipContent(true);
-                }
-            });
-            myApi = builder.build();
+                    // Set Your Computer's IP
+                    .setRootUrl("http://192.168.1.21:8080/_ah/api/")
+                    .setGoogleClientRequestInitializer(request -> request.setDisableGZipContent(true))
+                    .build();
         }
 
-        endPointCallBack = endPointCallBacks[0];
+        asyncTaskCallback = asyncTaskCallbacks[0];
+        asyncTaskCallback.setLoading(true);
 
         try {
             return myApi.getJokes().execute().getData();
         } catch (IOException e) {
             Log.e(TAG, "doInBackground: ", e);
-            return "";
+            return e.getMessage();
         }
     }
 
     @Override
     protected void onPostExecute(String s) {
+        if (s.toLowerCase().contains("failed to connect")) {
+            s = "No Joke for you.\n Try again later";
+        }
         Log.d(TAG, "onPostExecute: result " + s);
-        endPointCallBack.onResultReady(s);
+        asyncTaskCallback.jokeDisplayer(s);
     }
 }

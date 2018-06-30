@@ -11,7 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:text="@string/app_name"
-        android:gravity="center"
-        style="@android:style/TextAppearance.Large"/>
+        android:gravity="center" />
 
 </RelativeLayout>
